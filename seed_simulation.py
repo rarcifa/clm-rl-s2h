@@ -98,7 +98,7 @@ for SEED in range(N_SEEDS):
 
     print(f"Seed {SEED} done.")
 
-print(f"✓ {N_SEEDS}-seed evaluation finished — see {os.path.join(RESULTS_DIR, 'seed_runs.csv')}")
+print(f"{N_SEEDS}-seed evaluation finished — see {os.path.join(RESULTS_DIR, 'seed_runs.csv')}")
 
 # Optionally, print summary stats
 if os.path.exists(os.path.join(RESULTS_DIR, "seed_runs.csv")):
