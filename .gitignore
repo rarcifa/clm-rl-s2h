@@ -1,0 +1,61 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs and debugging
+*.log
+*.out
+*.err
+*.tmp
+
+# TensorBoard
+tensorboard_logs/
+*.tfevents.*
+
+# SB3 saved models
+models/
+*.zip
+*.pkl
+
+# Evaluation and heuristic outputs
+results/*.csv
+results/eval_logs/
+results/seed_runs.csv
+
+# Checkpoints and monitors
+*.monitor.csv
+ppo_logs/
+dqn_logs/
+ppo_simulation_train.csv
+dqn_simulation_train.csv
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Notebooks
+*.checkpoint
+*.ipynb_checkpoints/
+
+# Misc
+*.~*
