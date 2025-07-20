@@ -1,7 +1,7 @@
 """
 seed_simulation.py — Multi-Seed Evaluation for RL and Heuristic Strategies
 
-Runs multi-seed evaluation for PPO, DQN, and heuristic strategies on Uniswap V3 LP scenarios. For each seed, a new scenario is generated, and all strategies are evaluated and logged.
+Runs multi-seed evaluation for PPO, DQN, and heuristic strategies on Uniswap V3 LP scenarios. For each seed, a new random seed is set for gas/volume perturbations, but all evaluations use the same real historical scenario.
 
 Author: Ricardo Arcifa
 Affiliation: IEEE DAPPS 2025
@@ -16,13 +16,9 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 from environments.eval_env import UniswapV3EvalEnv
 from strategies.heuristic import run_heuristic
-from utils.core import generate_scenario_arrays
 
 # Configuration
 N_SEEDS = 50
-STEPS = 365
-INITIAL_PRICE = 2200.0
-INITIAL_INVESTMENT = 10000
 RESULTS_DIR = "results"
 EVAL_LOGS_DIR = os.path.join(RESULTS_DIR, "eval_logs/seeds/")
 MODELS_DIR = "models"
@@ -32,19 +28,21 @@ DQN_MODEL_PATH = os.path.join(MODELS_DIR, "uniswap_v3_dqn_model")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(EVAL_LOGS_DIR, exist_ok=True)
 
+# Load the real evaluation scenario ONCE
+real_eval_path = "data/evaluation_scenario_data.csv"
+df = pd.read_csv(real_eval_path)
+df = df[['Day', 'Price', 'Inverse_Price', 'Volume', 'Pool_Liquidity', 'Sqrt_Price', 'Shock']]
+df['Day'] = pd.to_datetime(df['Day'])
+shocks_eval = df['Shock'].values
+prices_eval = df['Price'].values
+sqrt_prices_eval = df['Sqrt_Price'].values
+volumes_eval = df['Volume'].values
+pool_liquidity_eval = df['Pool_Liquidity'].values
+
 # Main Seed Loop
 for SEED in range(N_SEEDS):
     np.random.seed(SEED)
     random.seed(SEED)
-
-    # Generate scenario for this seed
-    shocks_eval, prices_eval, sqrt_prices_eval, volumes_eval = generate_scenario_arrays(
-        steps=STEPS,
-        initial_price=INITIAL_PRICE,
-        mu=0.0001,
-        sigma=0.06
-    )
-    pool_liquidity_eval = np.random.uniform(1_000_000, 5_000_000, size=STEPS)
 
     # Evaluate PPO
     ppo_eval_file = os.path.join(EVAL_LOGS_DIR, f"ppo_seed{SEED}.csv")
