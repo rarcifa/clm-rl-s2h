@@ -33,6 +33,7 @@ models/
 # Evaluation and heuristic outputs
 results/*.csv
 results/eval_logs/
+results/train_logs/
 results/seed_runs.csv
 
 # Checkpoints and monitors

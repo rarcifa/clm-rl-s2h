@@ -19,17 +19,17 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# --- configuration ---
+# configuration
 CSV = "../results/seed_runs.csv"     # Evaluation summary file
 OUT_RL  = "fig_box_rl_apr.pdf"
 OUT_HP  = "fig_box_hp_apr.pdf"
 OUT_HV  = "fig_box_hv_apr.pdf"
 
-# --- load and prepare data ---
+# load and prepare data
 df = pd.read_csv(CSV)
 df["strategy"] = df["strategy"].str.lower()
 
-# --- define strategy groups ---
+# define strategy groups
 rl_strats   = ["ppo", "dqn"]
 heur_strats = ["heur_price", "heur_vol"]
 
@@ -37,7 +37,7 @@ df_rl   = df[df["strategy"].isin(rl_strats)]
 df_hp   = df[df["strategy"] == "heur_price"]
 df_hv   = df[df["strategy"] == "heur_vol"]
 
-# --- consistent color palette across all figures ---
+# consistent color palette across all figures
 base_palette = sns.color_palette("Set2", n_colors=4)
 pal_rl = {s: c for s, c in zip(sorted(rl_strats), base_palette[:2])}
 pal_hp = {"heur_price": base_palette[2]}
@@ -64,7 +64,7 @@ def make_single_box(data: pd.DataFrame, fname: str, palette: dict) -> None:
     plt.close()
 
 
-# --- generate figures ---
+# generate figures
 make_single_box(df_rl, OUT_RL, pal_rl)
 make_single_box(df_hp, OUT_HP, pal_hp)
 make_single_box(df_hv, OUT_HV, pal_hv)

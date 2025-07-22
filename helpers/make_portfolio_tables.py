@@ -19,7 +19,7 @@ import re
 import pandas as pd
 import numpy as np
 
-# --- configuration ---
+# configuration
 LOG_DIR = pathlib.Path("../results/eval_logs")             # per-seed evaluation logs
 OUT1    = pathlib.Path("../results/median_portfolio.csv")  # median portfolio values per step
 OUT2    = pathlib.Path("../results/holding_curve.csv")     # passive holding benchmark
@@ -62,14 +62,14 @@ def one_file(path: pathlib.Path) -> pd.DataFrame:
     })
 
 
-# --- read and parse all per-seed logs ---
+# read and parse all per-seed logs
 frames = [one_file(p) for p in LOG_DIR.glob("*.csv")]
 if not frames:
     raise SystemExit("No per-seed logs found – did you write them?")
 
 data = pd.concat(frames, ignore_index=True)
 
-# --- compute median portfolio trajectory (per step, per strategy) ---
+# compute median portfolio trajectory (per step, per strategy)
 median = (
     data.groupby(["step", "strategy"])["portfolio"]
         .median()
@@ -81,7 +81,7 @@ median = (
 median.to_csv(OUT1)
 print("wrote", OUT1)
 
-# --- generate buy-and-hold benchmark curve ---
+# generate buy-and-hold benchmark curve
 # ETH price path is same for all seeds 
 any_log = next(LOG_DIR.glob("ppo_seed*.csv"))
 prices = pd.read_csv(any_log)["price"]

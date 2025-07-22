@@ -2,26 +2,30 @@
 
 This repository implements a full synthetic-to-historical evaluation framework for **Concentrated Liquidity Management (CLM)** using deep reinforcement learning (RL). We benchmark **Proximal Policy Optimization (PPO)** and **Deep Q-Networks (DQN)** against two common heuristic strategies for managing Uniswap v3 LP positions.
 
-**Reference**  
+**Reference**
 This codebase supports the experiments and analysis presented in the following paper:
 
-> **Optimizing Concentrated Liquidity Management: A Synthetic-to-Historical Deep Reinforcement Learning Strategy**  
-> Ricardo Arcifa, Yuhang Ye, Yuansong Qiao, Brian Lee  
-> _IEEE DAPPS 2025 (Decentralized Applications and Infrastructures)_  
-> [PDF available](https://github.com/rarcifa/clm-rl-s2h) :contentReference[oaicite:0]{index=0}
+> **Optimizing Concentrated Liquidity Management: A Synthetic-to-Historical Deep Reinforcement Learning Strategy**
+> Ricardo Arcifa, Yuhang Ye, Yuansong Qiao, Brian Lee
+> _IEEE DAPPS 2025 (Decentralized Applications and Infrastructures)_ > [PDF available](https://github.com/rarcifa/clm-rl-s2h)
 
 ---
 
 ## Project Highlights
 
-- **End-to-end pipeline** for training, evaluation, and comparison of CLM strategies.
-- **Synthetic-to-Historical framework**: agents are trained on synthetic price/volume scenarios and evaluated on **real historical ETH/USDC Uniswap v3 data (Mar 2024 – Mar 2025)**.
+- **End-to-end pipeline** for training, evaluation, and benchmarking CLM strategies.
+- **Synthetic-to-Historical framework**: agents are trained on **synthetic** ETH/USDC scenarios and evaluated on **real historical Uniswap v3 data**.
 - **Deterministic heuristic strategies**:
-  - **HP**: rebalances on ±5% price deviation.
-  - **HV**: rebalances when 7-day rolling volatility exceeds 3%.
+
+  - **HP**: triggers on ±5% price move.
+  - **HV**: triggers when 7-day rolling volatility exceeds 3%.
+
 - **Reinforcement Learning strategies**:
+
   - **PPO** (Stable-Baselines3)
   - **DQN** (Stable-Baselines3)
+
+- **Per-seed logging and statistical analysis** across 50 seeds
 
 ---
 
@@ -29,30 +33,35 @@ This codebase supports the experiments and analysis presented in the following p
 
 ```bash
 .
-├── environments/              # Custom Gym-compatible environments
-│   ├── train_env.py
-│   └── eval_env.py
-├── strategies/                # Heuristic rebalancing logic
-│   └── heuristic.py
-├── utils/                     # Core utility functions
-│   ├── core.py
-│   ├── liquidity.py
-│   ├── callbacks.py
-│   └── portfolio_base.py
-├── results/                   # Output folder for logs, tables, plots
-│   ├── eval_logs/             # Per-strategy evaluation logs (CSV)
-│   ├── eval_logs/seeds/       # Per-seed evaluation logs (CSV)
-│   └── seed_runs.csv          # Summary metrics across seeds
-├── models/                    # Saved RL models (PPO, DQN)
+├── core/
+│   ├── train.py                  # Trains PPO and DQN on synthetic data
+│   ├── evaluate.py               # Evaluates PPO, DQN, and heuristics on real data
+├── envs/
+│   ├── train_env.py              # UniswapV3TrainEnv class (gym.Env)
+│   └── eval_env.py               # UniswapV3EvalEnv class (gym.Env)
+├── strategies/
+│   └── heuristic.py              # HP and HV heuristic strategies
+├── utils/
+│   ├── scenario.py               # Scenario generation (GBM)
+│   ├── liquidity.py              # Position math, ticks, and balances
+│   ├── callbacks.py              # Custom reward logging callback
+├── results/
+│   ├── train_logs/
+│   │   └── synthetic_training_scenario.npz
+│   ├── eval_logs/
+│   │   ├── ppo_seed*.csv
+│   │   ├── dqn_seed*.csv
+│   │   ├── heuristic_price_seed*.csv
+│   │   └── heuristic_vol_seed*.csv
+│   └── seed_runs.csv             # Summary stats across seeds
+├── models/
+│   ├── uniswap_v3_ppo_model.zip
+│   └── uniswap_v3_dqn_model.zip
 ├── data/
-│   └── evaluation_scenario_data.csv  # 1-year ETH/USDC market data
-├── train.py                   # Train PPO and DQN agents
-├── eval.py                    # Evaluate PPO, DQN, and heuristics on a fixed scenario
-├── seed_simulation.py         # Multi-seed evaluation for RL and heuristics
-├── make_gas_sensitivity.py    # Generates Table IV: APR under 0.5×/1×/2× gas
-├── make_portfolio_tables.py   # Generates median portfolio curves
-├── make_tables.py             # Generates all APR visualizations
-└── analyze_final_results.py   # Produces Table V–VII stats + Wilcoxon tests
+│   └── evaluation_scenario_data.csv  # Real ETH/USDC historical data (Mar 2024–Mar 2025)
+├── main.py                       # Launches training and evaluation
+├── LICENSE.md
+└── README.md
 ```
 
 ---
@@ -65,12 +74,12 @@ This codebase supports the experiments and analysis presented in the following p
 pip install -r requirements.txt
 ```
 
-**Dependencies**:
+**Python Requirements:**
 
 - Python ≥ 3.8
 - `stable-baselines3`
-- `gym`
-- `seaborn`, `matplotlib`, `pandas`, `numpy`
+- `gym` or `gymnasium`
+- `numpy`, `pandas`, `matplotlib`, `seaborn`
 
 ---
 
@@ -82,79 +91,90 @@ pip install -r requirements.txt
 python train.py
 ```
 
-- Trains PPO and DQN agents on synthetic data.
-- Saves models to `models/uniswap_v3_ppo_model` and `models/uniswap_v3_dqn_model`.
+- Generates 1 synthetic scenario.
+- Trains PPO and DQN agents on the same scenario.
+- Saves models to `./models/` and training logs to `./results/train_logs/`.
 
-### 3. Evaluate on a Fixed Scenario (Single Run)
-
-```bash
-python eval.py
-```
-
-- Loads the trained models.
-- Evaluates PPO and DQN on a fixed historical scenario (`data/evaluation_scenario_data.csv`).
-- Runs both heuristic strategies for comparison.
-- Logs results to `results/eval_logs/` and summary to `results/seed_runs.csv`.
-
-### 4. Multi-Seed Simulation (Robustness/Statistical Analysis)
+### 3. Evaluate on Real Historical Scenario
 
 ```bash
-python seed_simulation.py
+python evaluate.py
 ```
 
-- Loops over 50 random seeds (configurable in the script).
-- For each seed:
-  - Sets the random seed for reproducibility.
-  - Generates a new synthetic scenario.
-  - Evaluates PPO, DQN, and both heuristics on the scenario.
-  - Logs per-seed results to `results/eval_logs/seeds/` and summary to `results/seed_runs.csv`.
-- At the end, prints summary statistics for all strategies.
+- Loads real ETH/USDC data from `data/evaluation_scenario_data.csv`
+- Evaluates:
 
-**Note:**
+  - PPO
+  - DQN
+  - Heuristic HP (price-based)
+  - Heuristic HV (volatility-based)
 
-- Make sure you have trained models in `models/` before running `seed_simulation.py`.
-- You can change the number of seeds by editing `N_SEEDS` in `seed_simulation.py`.
-- The random seed ensures reproducibility of each scenario and evaluation.
+- Logs per-seed results to `results/eval_logs/`
+- Summary stats written to `results/seed_runs.csv`
+
+### 4. Run Train and Evaluation as Subprocess
+
+```bash
+python main.py
+```
+
+- Runs 50 evaluations with different seeds.
+- Each seed:
+
+  - Generates a new synthetic scenario
+  - Evaluates PPO, DQN, HP, HV
+
+- Summary and per-seed logs written to `results/eval_logs/seeds/` and `results/seed_runs.csv`
 
 ---
 
-## Reproducibility & Random Seeds
+## Reproducibility
 
-- Each run of `seed_simulation.py` sets the random seed for both `numpy` and `random` for full reproducibility.
-- Per-seed logs and summary metrics allow for robust statistical analysis and fair comparison of strategies.
+- Each seed sets `np.random.seed()` and `random.seed()`.
+- Trained PPO and DQN agents are evaluated under **the same market conditions**.
+- Synthetic scenario used in training is saved to `.npz` for traceability.
 
 ---
 
 ## Evaluation Metrics
 
-- **APR (%)**: Net return including LP fees, minus gas costs
-- **Impermanent Loss (IL)**: Relative to 50/50 buy-and-hold portfolio
-- **Gas Fees**: USD cost of rebalancing (realistic gas per day via Etherscan)
-- **LP Fees**: Gross fees accrued from swap volume
+- **APR (%)**: Net return incl. LP fees – gas
+- **Impermanent Loss (%)**: Relative to HODL
+- **LP Fees (\$)**: Revenue from swaps
+- **Gas Fees (\$)**: Cumulative gas for repositioning
 
 ---
 
-## Example Output (Table V)
+## Example Output (Table V from paper)
 
-| Strategy | APR (%)     | IL (%)     | LP Fees ($K) | Gas Fees ($K) |
-| -------- | ----------- | ---------- | ------------ | ------------- |
-| PPO      | 46 ± 40     | −66 ± 25   | 12.7 ± 3.7   | 0.7 ± 0.08    |
-| DQN      | 18.6 ± 44.2 | −64.3 ± 12 | 9.9 ± 4.4    | 0.8 ± 0.1     |
-| HP       | −30.6 ± 33  | −52.9 ± 26 | 6.7 ± 3.27   | 3.4 ± 0.75    |
-| HV       | −82.4 ± 17  | −64.1 ± 10 | 7.7 ± 1.9    | 8.7 ± 0.2     |
+| Strategy | APR (%)     | IL (%)     | LP Fees (\$K) | Gas Fees (\$K) |
+| -------- | ----------- | ---------- | ------------- | -------------- |
+| PPO      | 46 ± 40     | −66 ± 25   | 12.7 ± 3.7    | 0.7 ± 0.08     |
+| DQN      | 18.6 ± 44.2 | −64.3 ± 12 | 9.9 ± 4.4     | 0.8 ± 0.1      |
+| HP       | −30.6 ± 33  | −52.9 ± 26 | 6.7 ± 3.27    | 3.4 ± 0.75     |
+| HV       | −82.4 ± 17  | −64.1 ± 10 | 7.7 ± 1.9     | 8.7 ± 0.2      |
 
 ---
 
 ## Troubleshooting
 
-- If `results/seed_runs.csv` is missing after running `seed_simulation.py`, check for errors in the console output and ensure that the models exist in the `models/` directory.
-- Make sure all dependencies are installed and the directory structure matches the above.
+- `ModuleNotFoundError: No module named 'envs'`
+  → Run from project root:
+
+  ```bash
+  python core/train.py
+  python core/evaluate.py
+  ```
+
+- `np.save() got an unexpected keyword argument`
+  → Use `np.savez(...)` to save multiple arrays.
+
+- PPO or DQN performance is unstable
+  → Check seeds, reward scale, and number of steps.
 
 ---
 
 ## Citation
-
-If you use this framework in academic work, please cite:
 
 ```bibtex
 @inproceedings{arcifa2025clm,
@@ -167,18 +187,10 @@ If you use this framework in academic work, please cite:
 
 ---
 
-## Acknowledgements
-
-This work was supported by the President’s Doctoral Scholarship from the **Technological University of the Shannon (TUS), Ireland**, awarded in 2021.
-
----
-
 ## Contact
 
-Feel free to reach out with questions or contributions:
-
 - Ricardo Arcifa — [a00279376@student.tus.ie](mailto:a00279376@student.tus.ie)
-- GitHub: [github.com/rarcifa](https://github.com/rarcifa)
+- GitHub — [github.com/rarcifa](https://github.com/rarcifa)
 
 ---
 
